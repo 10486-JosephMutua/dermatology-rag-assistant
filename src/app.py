@@ -4,9 +4,12 @@ from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from vectordb import VectorDB
-from langchain_openai import ChatOpenAI
+
 from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.document_loaders import PyPDFLoader
+from langchain import PromptTemplate
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -19,13 +22,21 @@ def load_documents() -> List[str]:
     Returns:
         List of sample documents
     """
-    results = []
-    # TODO: Implement document loading
-    # HINT: Read the documents from the data directory
-    # HINT: Return a list of documents
-    # HINT: Your implementation depends on the type of documents you are using (.txt, .pdf, etc.)
+    from pathlib import Path
 
-    # Your implementation here
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DATA_DIR = BASE_DIR / "data"
+
+    pdf_path = DATA_DIR / "Derm_Handbook_3rd-Edition-_Nov_2020-FINAL.pdf"
+
+    results = []
+    # Load sample PDF document
+    
+    loader=PyPDFLoader(pdf_path)
+    pages=loader.load()
+    for page in pages:
+        results.append(page.page_content)
+
     return results
 
 
@@ -48,12 +59,44 @@ class RAGAssistant:
         # Initialize vector database
         self.vector_db = VectorDB()
 
-        # Create RAG prompt template
-        # TODO: Implement your RAG prompt template
-        # HINT: Use ChatPromptTemplate.from_template() with a template string
-        # HINT: Your template should include placeholders for {context} and {question}
-        # HINT: Design your prompt to effectively use retrieved context to answer questions
-        self.prompt_template = None  # Your implementation here
+        self.prompt_template=PromptTemplate(
+
+           input_variables=["context", "question"],
+template="""
+You are a board-certified dermatologist specializing in clinical diagnosis and patient-friendly communication.
+
+GOAL:
+Your job is to accurately answer questions using ONLY the information found in the retrieved dermatologist notes.
+
+CONTEXT:
+The text below contains dermatologist notes retrieved from the vector database.  
+Use this information as the sole source of truth.  
+Do NOT add assumptions, medical advice beyond what is included, or outside knowledge.
+
+{context}
+
+INSTRUCTION:
+Carefully read the context and answer the user's question using only the facts found in the context.  
+If the answer is not present in the context, respond strictly with: "I don't know".
+
+QUESTION:
+{question}
+
+OUTPUT FORMAT:
+Provide a clear, concise medical explanation 
+
+TONE/STYLE:
+- Professional but easy to understand  
+- No speculation  
+- No additional medical advice  
+- No invented information  
+
+OUTPUT:
+"""
+
+        )
+
+        
 
         # Create the chain
         self.chain = self.prompt_template | self.llm | StrOutputParser()
@@ -65,15 +108,9 @@ class RAGAssistant:
         Initialize the LLM by checking for available API keys.
         Tries OpenAI, Groq, and Google Gemini in that order.
         """
-        # Check for OpenAI API key
-        if os.getenv("OPENAI_API_KEY"):
-            model_name = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-            print(f"Using OpenAI model: {model_name}")
-            return ChatOpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"), model=model_name, temperature=0.0
-            )
-
-        elif os.getenv("GROQ_API_KEY"):
+        
+       
+        if os.getenv("GROQ_API_KEY"):
             model_name = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
             print(f"Using Groq model: {model_name}")
             return ChatGroq(
@@ -101,7 +138,8 @@ class RAGAssistant:
         Args:
             documents: List of documents
         """
-        self.vector_db.add_documents(documents)
+        text="".join(load_documents())
+        self.vector_db.add_documents(self.vector_db.chunk_text(text))
 
     def invoke(self, input: str, n_results: int = 3) -> str:
         """
@@ -112,16 +150,19 @@ class RAGAssistant:
             n_results: Number of relevant chunks to retrieve
 
         Returns:
-            Dictionary containing the answer and retrieved context
+            string  containing the answer 
         """
-        llm_answer = ""
-        # TODO: Implement the RAG query pipeline
-        # HINT: Use self.vector_db.search() to retrieve relevant context chunks
-        # HINT: Combine the retrieved document chunks into a single context string
-        # HINT: Use self.chain.invoke() with context and question to generate the response
-        # HINT: Return a string answer from the LLM
+      
+        results=self.vector_db.search(input, n_results=n_results)
+        
 
-        # Your implementation here
+        context=results["documents"]
+
+        self.chain.invoke({"context":context,"question":input})
+
+
+        llm_answer = self.chain.invoke({"context":context,"question":input})
+
         return llm_answer
 
 
@@ -146,7 +187,7 @@ def main():
             if question.lower() == "quit":
                 done = True
             else:
-                result = assistant.query(question)
+                result = assistant.invoke(question)
                 print(result)
 
     except Exception as e:
