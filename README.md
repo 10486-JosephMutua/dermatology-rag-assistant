@@ -51,27 +51,31 @@ The assistant works by retrieving sections of the handbook that relate to a user
 - An API key for OpenAI, Groq, or Google Gemini
 
 ### 1. Clone the Repository
+```bash
 
 git clone <https://github.com/10486-JosephMutua/dermatology-rag-assistant.git>
 cd <dermatology-rag-assistant>
-
+```
 ### 2. Install Dependencies
-
+```bash
 pip install -r requirements.txt
-
+```
 ### 3. Configure Environment Variables
 
 Create a .env file:
 
+```bash
 Linux/macOS:
 cp .env.example .env
+```
 
+```bash
 Windows:
 copy .env.example .env
-
+```
 Open .env and add one provider key:
 
-OPENAI_API_KEY="..."
+# OPENAI_API_KEY="..."
 # GROQ_API_KEY="..."
 # GOOGLE_API_KEY="..."
 
@@ -96,6 +100,8 @@ On the first run, the system will process and embed the entire PDF. This may tak
 
 ## Project Structure
 
+
+```txt
 .
 ├── src/
 │   ├── app.py           # Main application logic
@@ -107,7 +113,7 @@ On the first run, the system will process and embed the entire PDF. This may tak
 ├── .env.example
 ├── .gitignore
 └── README.md
-
+---
 ## License
 
 This project is released under the MIT License.
