@@ -89,9 +89,9 @@ data/
 ```
 
 ## Running the Application
-
-python src/app.py
-
+```txt
+ src/app.py
+```
 On the first run, the system will process and embed the entire PDF. This may take a few minutes. Once done, the vector store is saved in chroma_db/, and later runs will start immediately.
 
 ## Example Questions
@@ -115,7 +115,7 @@ On the first run, the system will process and embed the entire PDF. This may tak
 ├── .env.example
 ├── .gitignore
 └── README.md
----
+```
 
 ## License
 
