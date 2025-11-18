@@ -74,17 +74,19 @@ Windows:
 copy .env.example .env
 ```
 Open .env and add one provider key:
-
+```bash
 # OPENAI_API_KEY="..."
 # GROQ_API_KEY="..."
 # GOOGLE_API_KEY="..."
-
+```
 ### 4. Add the PDF Document
 
 Place the handbook file into the data/ directory:
 
+```txt
 data/
 └── Derm_Handbook_3rd-Edition-_Nov_2020-FINAL.pdf
+```
 
 ## Running the Application
 
@@ -114,6 +116,7 @@ On the first run, the system will process and embed the entire PDF. This may tak
 ├── .gitignore
 └── README.md
 ---
+
 ## License
 
 This project is released under the MIT License.
